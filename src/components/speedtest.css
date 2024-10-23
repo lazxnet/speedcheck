@@ -1,0 +1,69 @@
+.App {
+    text-align: center;
+  }
+  
+  .App-header {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+  }
+  
+  .App-link {
+    color: #61dafb;
+  }
+  
+  .speed-test-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .result-heading {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  
+  .result-subheading {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .speed-result {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .ping-result {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+  
+  .button-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .test-button {
+    background-color: #121920;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .test-button:hover {
+    background-color: #0056b3;
+  }
+  
