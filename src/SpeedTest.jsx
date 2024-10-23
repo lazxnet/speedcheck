@@ -64,13 +64,13 @@ export default function SpeedTest() {
             {speedResults ? (
               <div className="speed-results">
                 <div className="speed-item">
-                  <p><Download className="icon" /> Descarga: {speedResults.download.toFixed(2)} Mbps</p>
+                  <p><Download className="icon" /> Descarga: {speedResults.download.toFixed(2)} Kbps</p>
                   <div className="progress-bar">
                     <div className="progress-fill" style={{width: `${(speedResults.download / 150) * 100}%`}}></div>
                   </div>
                 </div>
                 <div className="speed-item">
-                  <p><Upload className="icon" /> Subida: {speedResults.upload.toFixed(2)} Mbps</p>
+                  <p><Upload className="icon" /> Subida: {speedResults.upload.toFixed(2)} Kbps</p>
                   <div className="progress-bar">
                     <div className="progress-fill" style={{width: `${(speedResults.upload / 75) * 100}%`}}></div>
                   </div>
