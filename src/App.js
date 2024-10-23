@@ -1,6 +1,5 @@
-import React from 'react';
-import './App.css';
-import SpeedTest from './components/speedtestcomponent';
+
+import SpeedTest from './SpeedTest';
 
 function App() {
   return (
