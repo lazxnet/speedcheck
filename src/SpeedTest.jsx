@@ -173,7 +173,6 @@ const SpeedTest = () => {
               <p>IP: {ipInfo.ip}</p>
               <p>Ubicación: {ipInfo.city}, {ipInfo.country_name}</p>
               <p>Proveedor: {ipInfo.org}</p>
-              <p>Host: {window.location.hostname}</p>
             </motion.div>
           )}
           <button
