@@ -193,7 +193,7 @@ const SpeedTest = () => {
             />
           )}
           <div className="grid grid-cols-3 gap-4 mt-6">
-            {['ping', 'download', 'upload'].map((metric) => (
+            {['latencia', 'download', 'upload'].map((metric) => (
               <motion.div
                 key={metric}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -202,19 +202,19 @@ const SpeedTest = () => {
                 className="text-center"
               >
                 <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
-                  metric === 'ping' ? 'bg-blue-100 text-blue-600' :
+                  metric === 'latencia' ? 'bg-blue-100 text-blue-600' :
                   metric === 'download' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                 }`}>
-                  {metric === 'ping' ? <Gauge size={24} /> :
+                  {metric === 'latencia' ? <Gauge size={24} /> :
                    metric === 'download' ? <Download size={24} /> : <Upload size={24} />}
                 </div>
                 <p className="text-lg font-semibold mt-2">
-                  {metric === 'ping' ? (ping !== null ? `${ping} ms` : '-') :
+                  {metric === 'latencia' ? (ping !== null ? `${ping} ms` : '-') :
                    metric === 'download' ? (downloadSpeed !== null ? `${downloadSpeed} Mbps` : '-') :
                    (uploadSpeed !== null ? `${uploadSpeed} Mbps` : '-')}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {metric === 'ping' ? 'Ping' : metric === 'download' ? 'Descarga' : 'Subida'}
+                  {metric === 'latencia' ? 'Latencia' : metric === 'download' ? 'Descarga' : 'Subida'}
                 </p>
               </motion.div>
             ))}
@@ -222,8 +222,9 @@ const SpeedTest = () => {
           {error && (
             <motion.p
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-4 text-red-600 text-center"
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="mt-4 text-red-600 text-center bg-red-100 w-full py-3 px-4 font-medium rounded-md"
             >
               {error}
             </motion.p>
@@ -232,7 +233,7 @@ const SpeedTest = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.5 }}
           className="p-4 bg-gray-100 text-center text-sm text-gray-600"
         >
           Los resultados son estimaciones y pueden variar. Para obtener una medición más precisa, ejecute varias pruebas.
