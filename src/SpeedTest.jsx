@@ -165,10 +165,11 @@ const SpeedTest = () => {
         <div className="p-6">
           {ipInfo && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="mb-4 text-gray-800 text-sm"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-4 text-gray-800 text-sm overflow-hidden"
             >
               <p>IP: {ipInfo.ip}</p>
               <p>Ubicación: {ipInfo.city}, {ipInfo.country_name}</p>
@@ -201,18 +202,27 @@ const SpeedTest = () => {
                 transition={{ delay: 0.5, duration: 0.3 }}
                 className="text-center"
               >
-                <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
-                  metric === 'latencia' ? 'bg-blue-100 text-blue-600' :
-                  metric === 'download' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                }`}>
+                <motion.div 
+                  className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
+                    metric === 'latencia' ? 'bg-blue-100 text-blue-600' :
+                    metric === 'download' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
                   {metric === 'latencia' ? <Gauge size={24} /> :
                    metric === 'download' ? <Download size={24} /> : <Upload size={24} />}
-                </div>
-                <p className="text-lg font-semibold mt-2">
+                </motion.div>
+                <motion.p 
+                  className="text-lg font-semibold mt-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
                   {metric === 'latencia' ? (ping !== null ? `${ping} ms` : '-') :
                    metric === 'download' ? (downloadSpeed !== null ? `${downloadSpeed} Mbps` : '-') :
                    (uploadSpeed !== null ? `${uploadSpeed} Mbps` : '-')}
-                </p>
+                </motion.p>
                 <p className="text-sm text-gray-600">
                   {metric === 'latencia' ? 'Latencia' : metric === 'download' ? 'Descarga' : 'Subida'}
                 </p>
@@ -221,11 +231,14 @@ const SpeedTest = () => {
           </div>
           {error && (
             <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-              className="mt-4 text-red-600 text-center bg-red-100 w-full py-3 px-4 font-medium rounded-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3, delay: 0.5 }}
+            className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded"
+            role="alert"
             >
+              <p className="font-bold">Error</p>
               {error}
             </motion.p>
           )}
