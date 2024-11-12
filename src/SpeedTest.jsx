@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Download, Gauge } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Función para medir el ping
 const measurePing = async () => {
@@ -88,6 +88,7 @@ const SpeedTest = () => {
   const [ping, setPing] = useState(null);
   const [ipInfo, setIpInfo] = useState(null);
   const [error, setError] = useState(null);
+  const [latencyWarning, setLatencyWarning] = useState(false);
 
   useEffect(() => {
     const fetchIpInfo = async () => {
@@ -119,6 +120,7 @@ const SpeedTest = () => {
     setUploadSpeed(null);
     setPing(null);
     setError(null);
+    setLatencyWarning(false);
 
     try {
       const isConnected = await checkInternetConnection();
@@ -130,6 +132,11 @@ const SpeedTest = () => {
       setProgress(10);
       const pingResult = await measurePing();
       setPing(Math.round(pingResult));
+      
+      // Check pingResult si es mayor o igual a 250 ms
+      if (pingResult >= 250) {
+        setLatencyWarning(true);
+      }
 
       // Medir velocidad de descarga
       setProgress(40);
@@ -165,11 +172,11 @@ const SpeedTest = () => {
         <div className="p-6">
           {ipInfo && (
             <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mb-4 text-gray-800 text-sm overflow-hidden"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-4 text-gray-800 text-sm overflow-hidden"
             >
               <p>IP: {ipInfo.ip}</p>
               <p>Ubicación: {ipInfo.city}, {ipInfo.country_name}</p>
@@ -229,19 +236,34 @@ const SpeedTest = () => {
               </motion.div>
             ))}
           </div>
-          {error && (
-            <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3, delay: 0.5 }}
-            className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded"
-            role="alert"
-            >
-              <p className="font-bold">Error</p>
-              {error}
-            </motion.p>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded"
+                role="alert"
+              >
+                <p className="font-bold">Error</p>
+                {error}
+              </motion.p>
+            )}
+            {latencyWarning && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded"
+                role="alert"
+              >
+                <p className="font-bold">Advertencia</p>
+                Su conexión es inestable.
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
         <motion.div
           initial={{ opacity: 0 }}
