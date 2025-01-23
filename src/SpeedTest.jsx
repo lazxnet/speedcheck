@@ -113,7 +113,11 @@ const SpeedTest = () => {
     fetchIpInfo();
   }, []);
 
+  const [isTesting, setIsTesting] = useState(false);
+
   const runSpeedTest = async () => {
+    if (isTesting) return; // Evita múltiples ejecuciones
+    setIsTesting(true);
     setIsLoading(true);
     setProgress(0);
     setDownloadSpeed(null);
@@ -154,6 +158,7 @@ const SpeedTest = () => {
       setError(error.message || 'Ocurrió un error durante la prueba. Por favor, inténtelo de nuevo.');
     } finally {
       setIsLoading(false);
+      setIsTesting(false);
     }
   };
 
