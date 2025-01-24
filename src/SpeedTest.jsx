@@ -5,27 +5,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Función para medir el ping
 const measurePing = async () => {
   const attempts = 3;
-  const results = [];
+  const urls = Array(attempts).fill('https://www.google.com');
 
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const start = performance.now();
-      await fetch('https://www.google.com', { mode: 'no-cors' });
-      const end = performance.now();
-      results.push(end - start);
-    } catch (error) {
-      console.error('Error al medir el ping:', error);
-    }
-  }
+  try {
+    const results = await Promise.all(
+      urls.map(async (url) => {
+         // Inicia el contador de tiempo
+        const start = performance.now();
+         // Realiza la solicitud
+        await fetch(url, { mode: 'no-cors' });
+        const end = performance.now();
+        return end - start;
+      })
+    );
 
-  if (results.length === 0) {
+    // Ordena los resultados y calcula la mediana
+    results.sort((a, b) => a - b);
+    const median = results[Math.floor(results.length / 2)];
+    return median;
+  } catch (error) {
+    console.error('Error al medir el ping:', error);
     throw new Error('No se pudo medir el ping después de múltiples intentos');
   }
-
-  // Calcular la mediana del ping
-  results.sort((a, b) => a - b);
-  const median = results[Math.floor(results.length / 2)];
-  return median;
 };
 
 // Función para medir la velocidad de descarga
