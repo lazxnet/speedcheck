@@ -71,11 +71,16 @@ const measureUploadSpeed = async () => {
 };
 
 const checkInternetConnection = async () => {
+  const timeout = 5000; // 5 segundos
+  const controller = new AbortController();
+  const timeoutID = setTimeout(() => controller.abort(), timeout);
+
   try {
-    await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-store' });
+    await fetch("https://www.google.com", {mode: 'no-cors', cache:'no-store', signal: controller.signal});
+    clearTimeout(timeoutID);
     return true;
   } catch (error) {
-    console.error('Error checking internet connection:', error);
+    console.error("Error checking internet connection: ", error);
     return false;
   }
 };
