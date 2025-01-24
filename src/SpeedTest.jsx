@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Download, Gauge } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Función para medir el ping
 const measurePing = async () => {
   const attempts = 3;
-  const results = [];
+  const urls = Array(attempts).fill('https://www.google.com');
 
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const start = performance.now();
-      await fetch('https://www.google.com', { mode: 'no-cors' });
-      const end = performance.now();
-      results.push(end - start);
-    } catch (error) {
-      console.error('Error al medir el ping:', error);
-    }
-  }
+  try {
+    const results = await Promise.all(
+      urls.map(async (url) => {
+         // Inicia el contador de tiempo
+        const start = performance.now();
+         // Realiza la solicitud
+        await fetch(url, { mode: 'no-cors' });
+        const end = performance.now();
+        return end - start;
+      })
+    );
 
-  if (results.length === 0) {
+    // Ordena los resultados y calcula la mediana
+    results.sort((a, b) => a - b);
+    const median = results[Math.floor(results.length / 2)];
+    return median;
+  } catch (error) {
+    console.error('Error al medir el ping:', error);
     throw new Error('No se pudo medir el ping después de múltiples intentos');
   }
-
-  // Calcular la mediana del ping
-  results.sort((a, b) => a - b);
-  const median = results[Math.floor(results.length / 2)];
-  return median;
 };
 
 // Función para medir la velocidad de descarga
@@ -70,11 +71,16 @@ const measureUploadSpeed = async () => {
 };
 
 const checkInternetConnection = async () => {
+  const timeout = 5000; // 5 segundos
+  const controller = new AbortController();
+  const timeoutID = setTimeout(() => controller.abort(), timeout);
+
   try {
-    await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-store' });
+    await fetch("https://www.google.com", {mode: 'no-cors', cache:'no-store', signal: controller.signal});
+    clearTimeout(timeoutID);
     return true;
   } catch (error) {
-    console.error('Error checking internet connection:', error);
+    console.error("Error checking internet connection: ", error);
     return false;
   }
 };
@@ -88,6 +94,7 @@ const SpeedTest = () => {
   const [ping, setPing] = useState(null);
   const [ipInfo, setIpInfo] = useState(null);
   const [error, setError] = useState(null);
+  const [latencyWarning, setLatencyWarning] = useState(false);
 
   useEffect(() => {
     const fetchIpInfo = async () => {
@@ -112,13 +119,18 @@ const SpeedTest = () => {
     fetchIpInfo();
   }, []);
 
+  const [isTesting, setIsTesting] = useState(false);
+
   const runSpeedTest = async () => {
+    if (isTesting) return; // Evita múltiples ejecuciones
+    setIsTesting(true);
     setIsLoading(true);
     setProgress(0);
     setDownloadSpeed(null);
     setUploadSpeed(null);
     setPing(null);
     setError(null);
+    setLatencyWarning(false);
 
     try {
       const isConnected = await checkInternetConnection();
@@ -130,6 +142,11 @@ const SpeedTest = () => {
       setProgress(10);
       const pingResult = await measurePing();
       setPing(Math.round(pingResult));
+      
+      // Check pingResult si es mayor o igual a 250 ms
+      if (pingResult >= 250) {
+        setLatencyWarning(true);
+      }
 
       // Medir velocidad de descarga
       setProgress(40);
@@ -147,6 +164,7 @@ const SpeedTest = () => {
       setError(error.message || 'Ocurrió un error durante la prueba. Por favor, inténtelo de nuevo.');
     } finally {
       setIsLoading(false);
+      setIsTesting(false);
     }
   };
 
@@ -165,10 +183,11 @@ const SpeedTest = () => {
         <div className="p-6">
           {ipInfo && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="mb-4 text-gray-800 text-sm"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-4 text-gray-800 text-sm overflow-hidden"
             >
               <p>IP: {ipInfo.ip}</p>
               <p>Ubicación: {ipInfo.city}, {ipInfo.country_name}</p>
@@ -193,7 +212,7 @@ const SpeedTest = () => {
             />
           )}
           <div className="grid grid-cols-3 gap-4 mt-6">
-            {['ping', 'download', 'upload'].map((metric) => (
+            {['latencia', 'download', 'upload'].map((metric) => (
               <motion.div
                 key={metric}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -201,38 +220,66 @@ const SpeedTest = () => {
                 transition={{ delay: 0.5, duration: 0.3 }}
                 className="text-center"
               >
-                <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
-                  metric === 'ping' ? 'bg-blue-100 text-blue-600' :
-                  metric === 'download' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                }`}>
-                  {metric === 'ping' ? <Gauge size={24} /> :
+                <motion.div 
+                  className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
+                    metric === 'latencia' ? 'bg-blue-100 text-blue-600' :
+                    metric === 'download' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {metric === 'latencia' ? <Gauge size={24} /> :
                    metric === 'download' ? <Download size={24} /> : <Upload size={24} />}
-                </div>
-                <p className="text-lg font-semibold mt-2">
-                  {metric === 'ping' ? (ping !== null ? `${ping} ms` : '-') :
+                </motion.div>
+                <motion.p 
+                  className="text-lg font-semibold mt-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  {metric === 'latencia' ? (ping !== null ? `${ping} ms` : '-') :
                    metric === 'download' ? (downloadSpeed !== null ? `${downloadSpeed} Mbps` : '-') :
                    (uploadSpeed !== null ? `${uploadSpeed} Mbps` : '-')}
-                </p>
+                </motion.p>
                 <p className="text-sm text-gray-600">
-                  {metric === 'ping' ? 'Ping' : metric === 'download' ? 'Descarga' : 'Subida'}
+                  {metric === 'latencia' ? 'Latencia' : metric === 'download' ? 'Descarga' : 'Subida'}
                 </p>
               </motion.div>
             ))}
           </div>
-          {error && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-4 text-red-600 text-center"
-            >
-              {error}
-            </motion.p>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded"
+                role="alert"
+              >
+                <p className="font-bold">Error</p>
+                {error}
+              </motion.p>
+            )}
+            {latencyWarning && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded"
+                role="alert"
+              >
+                <p className="font-bold">Advertencia</p>
+                Su conexión es inestable.
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.5 }}
           className="p-4 bg-gray-100 text-center text-sm text-gray-600"
         >
           Los resultados son estimaciones y pueden variar. Para obtener una medición más precisa, ejecute varias pruebas.
