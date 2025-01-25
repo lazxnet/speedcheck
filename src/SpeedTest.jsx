@@ -34,7 +34,10 @@ const measurePing = async () => {
     // Ordena los resultados y calcula la mediana
     validResults.sort((a, b) => a - b);
     const median = validResults[Math.floor(validResults.length / 2)];
-    return Math.round(median); // Redondea el ping a un numero entero
+
+
+    //Usa solo la parte entera
+    return Math.floor(median); // Redondea hacia abajo
   } catch (error) {
     console.error('Error al medir el ping:', error);
     throw new Error('No se pudo medir el ping después de múltiples intentos');
