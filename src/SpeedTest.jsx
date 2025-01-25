@@ -4,25 +4,40 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Función para medir el ping
 const measurePing = async () => {
-  const attempts = 3;
-  const urls = Array(attempts).fill('https://www.google.com');
+  const attempts = 3;  // Nuemro de intentos
+  const urls = Array(attempts).fill('https://www.google.com'); // url a medir
 
   try {
     const results = await Promise.all(
       urls.map(async (url) => {
-         // Inicia el contador de tiempo
-        const start = performance.now();
-         // Realiza la solicitud
-        await fetch(url, { mode: 'no-cors' });
-        const end = performance.now();
-        return end - start;
+         try{
+          const start = performance.now(); // Inicia el contador del tiempo
+
+          //TODO:Usa una solicitud HEAD para medir solo el tiempo de ida y vuelta
+          await fetch(url, {method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
+
+          const end = performance.now(); // Finaliza el contador de tiempo
+          return end - start; // Devuelve el tiempo de ping
+         } catch (error) {
+          console.error("Error en la medición de ping: ", error);
+          return null; // Devuelve null si hay un error
+         }
       })
     );
 
+    //TODO: Filtrar resultados nulos (errores) y verifica que haya al menos un resultado válido
+    const validResults = results.filter((results) => results !== null);
+    if (validResults.length === 0) {
+      throw new Error("Todos los intentos de medición de ping fallaron.");
+    }
+
     // Ordena los resultados y calcula la mediana
-    results.sort((a, b) => a - b);
-    const median = results[Math.floor(results.length / 2)];
-    return median;
+    validResults.sort((a, b) => a - b);
+    const median = validResults[Math.floor(validResults.length / 2)];
+
+
+    //Usa solo la parte entera
+    return Math.floor(median); // Redondea hacia abajo
   } catch (error) {
     console.error('Error al medir el ping:', error);
     throw new Error('No se pudo medir el ping después de múltiples intentos');
