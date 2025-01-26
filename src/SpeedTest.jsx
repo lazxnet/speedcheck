@@ -90,45 +90,37 @@ const measureDownloadSpeed = async () => {
 
 // Función para medir la velocidad de subida
 const measureUploadSpeed = async () => {
-  const fileSize = 5 * 1024 * 1024; // 5MB
+  const fileSize = 1 * 1024 * 1024; // 1MB
   const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
 
-  try {
+  // TODO: Crear un buffer de datos ficticios para subir
+  const dummyData = new Uint8Array(fileSize).fill(97); // Datos de ejemplo (carácter 'a')
+
+  try{
     const startTime = performance.now();
 
-    // Realizar la solicitud de descarga
-    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${fileSize}`, {
-      signal: controller.signal, // Asignar el AbortController a la solicitud
+    //TODO: Usar el endpoint de subida y metodo POST
+    const response = await fetch('https://httpbin.org/post', {
+      method: 'POST',
+      body: dummyData,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileSize.toString(), // Especificar tamaño
+      },
     });
 
-    // Verificar si la respuesta es válida
     if (!response.ok) {
       throw new Error(`Error HTTP! Estado: ${response.status}`);
     }
 
-    // Leer el contenido de la respuesta
-    const buffer = await response.arrayBuffer();
-
-    // Validar el tamaño del archivo descargado
-    if (buffer.byteLength !== fileSize) {
-      throw new Error(`Tamaño del archivo incorrecto. Esperado: ${fileSize} bytes, Recibido: ${buffer.byteLength} bytes`);
-    }
-
     const endTime = performance.now();
-
-    // Calcular la velocidad de descarga en Mbps
-    const durationInSeconds = (endTime - startTime) / 1000;
-    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); // Mbps
-    return Number(speedMbps.toFixed(2)); // Redondear a 2 decimales
-  } catch (error) {
-    console.error('Error al medir la velocidad de descarga:', error);
-
-    // Lanzar un error más específico
-    if (error.name === 'AbortError') {
-      throw new Error('La medición de velocidad de descarga fue cancelada.');
-    } else {
-      throw new Error(`Error al medir la velocidad de descarga: ${error.message}`);
-    }
+    const durationInSeconds = (endTime - startTime) /1000;
+    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); 
+    return Number(speedMbps.toFixed(2));
+  } catch (error){
+    console.error("Error en subida: ", error);
+    throw new Error(`Error de red: ${error.message}`);
   }
 };
 
