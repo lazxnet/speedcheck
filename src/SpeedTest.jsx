@@ -4,67 +4,50 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Función para medir el ping
 const measurePing = async () => {
-  const attempts = 3;  // Nuemro de intentos
-  const urls = Array(attempts).fill('https://www.google.com'); // url a medir
+  const attempts = 3; // Número de intentos
+  const url = 'https://www.google.com'; // URL a medir
 
   try {
-    const results = await Promise.all(
-      urls.map(async (url) => {
-         try{
-          const start = performance.now(); // Inicia el contador del tiempo
+    let minPing = Infinity;
 
-          //TODO:Usa una solicitud HEAD para medir solo el tiempo de ida y vuelta
-          await fetch(url, {method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
-
-          const end = performance.now(); // Finaliza el contador de tiempo
-          return end - start; // Devuelve el tiempo de ping
-         } catch (error) {
-          console.error("Error en la medición de ping: ", error);
-          return null; // Devuelve null si hay un error
-         }
-      })
-    );
-
-    //TODO: Filtrar resultados nulos (errores) y verifica que haya al menos un resultado válido
-    const validResults = results.filter((results) => results !== null);
-    if (validResults.length === 0) {
-      throw new Error("Todos los intentos de medición de ping fallaron.");
+    // Realiza intentos secuenciales para permitir reuso de conexiones
+    for (let i = 0; i < attempts; i++) {
+      try {
+        // Usa un parámetro único para evitar caché y rastrear la solicitud
+        const uniqueUrl = `${url}?ping=${Date.now()}`;
+        const startTime = performance.now();
+        
+        await fetch(uniqueUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          cache: 'no-store',
+          credentials: 'omit',
+          referrerPolicy: 'no-referrer'
+        });
+        
+        const duration = performance.now() - startTime;
+        
+        // Actualiza el ping mínimo encontrado
+        if (duration < minPing) minPing = duration;
+        
+      } catch (error) {
+        console.error("Error en intento de ping:", error);
+      }
     }
 
-    // Ordena los resultados y calcula la mediana
-    validResults.sort((a, b) => a - b);
-    const median = validResults[Math.floor(validResults.length / 2)];
+    if (minPing === Infinity) {
+      throw new Error("Todos los intentos fallaron");
+    }
 
-
-    //Usa solo la parte entera
-    return Math.floor(median); // Redondea hacia abajo
+    return Math.floor(minPing);
   } catch (error) {
     console.error('Error al medir el ping:', error);
-    throw new Error('No se pudo medir el ping después de múltiples intentos');
+    throw error;
   }
 };
 
 // Función para medir la velocidad de descarga
 const measureDownloadSpeed = async () => {
-  try {
-    const fileSize = 5 * 1024 * 1024; // 5MB
-    const startTime = performance.now();
-    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${fileSize}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    await response.arrayBuffer();
-    const endTime = performance.now();
-    const durationInSeconds = (endTime - startTime) / 1000;
-    return (fileSize * 8) / durationInSeconds / 1000000; // Mbps
-  } catch (error) {
-    console.error('Error al medir la velocidad de descarga:', error);
-    throw error;
-  }
-};
-
-// Función para medir la velocidad de subida
-const measureUploadSpeed = async () => {
   const fileSize = 5 * 1024 * 1024; // 5MB
   const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
 
@@ -104,6 +87,42 @@ const measureUploadSpeed = async () => {
     } else {
       throw new Error(`Error al medir la velocidad de descarga: ${error.message}`);
     }
+  }
+};
+
+// Función para medir la velocidad de subida
+const measureUploadSpeed = async () => {
+  const fileSize = 1 * 1024 * 1024; // 1MB
+  const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
+
+  // TODO: Crear un buffer de datos ficticios para subir
+  const dummyData = new Uint8Array(fileSize).fill(97); // Datos de ejemplo (carácter 'a')
+
+  try{
+    const startTime = performance.now();
+
+    //TODO: Usar el endpoint de subida y metodo POST
+    const response = await fetch('https://httpbin.org/post', {
+      method: 'POST',
+      body: dummyData,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileSize.toString(), // Especificar tamaño
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP! Estado: ${response.status}`);
+    }
+
+    const endTime = performance.now();
+    const durationInSeconds = (endTime - startTime) /1000;
+    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); 
+    return Number(speedMbps.toFixed(2));
+  } catch (error){
+    console.error("Error en subida: ", error);
+    throw new Error(`Error de red: ${error.message}`);
   }
 };
 
