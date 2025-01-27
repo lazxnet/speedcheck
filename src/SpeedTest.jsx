@@ -4,43 +4,45 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Función para medir el ping
 const measurePing = async () => {
-  const attempts = 3;  // Nuemro de intentos
-  const urls = Array(attempts).fill('https://www.google.com'); // url a medir
+  const attempts = 3; // Número de intentos
+  const url = 'https://www.google.com'; // URL a medir
 
   try {
-    const results = await Promise.all(
-      urls.map(async (url) => {
-         try{
-          const start = performance.now(); // Inicia el contador del tiempo
+    let minPing = Infinity;
 
-          //TODO:Usa una solicitud HEAD para medir solo el tiempo de ida y vuelta
-          await fetch(url, {method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
-
-          const end = performance.now(); // Finaliza el contador de tiempo
-          return end - start; // Devuelve el tiempo de ping
-         } catch (error) {
-          console.error("Error en la medición de ping: ", error);
-          return null; // Devuelve null si hay un error
-         }
-      })
-    );
-
-    //TODO: Filtrar resultados nulos (errores) y verifica que haya al menos un resultado válido
-    const validResults = results.filter((results) => results !== null);
-    if (validResults.length === 0) {
-      throw new Error("Todos los intentos de medición de ping fallaron.");
+    // Realiza intentos secuenciales para permitir reuso de conexiones
+    for (let i = 0; i < attempts; i++) {
+      try {
+        // Usa un parámetro único para evitar caché y rastrear la solicitud
+        const uniqueUrl = `${url}?ping=${Date.now()}`;
+        const startTime = performance.now();
+        
+        await fetch(uniqueUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          cache: 'no-store',
+          credentials: 'omit',
+          referrerPolicy: 'no-referrer'
+        });
+        
+        const duration = performance.now() - startTime;
+        
+        // Actualiza el ping mínimo encontrado
+        if (duration < minPing) minPing = duration;
+        
+      } catch (error) {
+        console.error("Error en intento de ping:", error);
+      }
     }
 
-    // Ordena los resultados y calcula la mediana
-    validResults.sort((a, b) => a - b);
-    const median = validResults[Math.floor(validResults.length / 2)];
+    if (minPing === Infinity) {
+      throw new Error("Todos los intentos fallaron");
+    }
 
-
-    //Usa solo la parte entera
-    return Math.floor(median); // Redondea hacia abajo
+    return Math.floor(minPing);
   } catch (error) {
     console.error('Error al medir el ping:', error);
-    throw new Error('No se pudo medir el ping después de múltiples intentos');
+    throw error;
   }
 };
 
