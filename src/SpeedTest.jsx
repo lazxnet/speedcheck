@@ -2,6 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Upload, Download, Gauge } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Función externa para obtener información IP
+const fetchIpInfo = async (setIpInfo, setError) => {
+  try {
+    const isConnected = await checkInternetConnection();
+    if (!isConnected) {
+      throw new Error('No hay conexión a Internet. No se puede obtener la información IP.');
+    }
+
+    const res = await fetch('https://ipapi.co/json/');
+    if (!res.ok) {
+      throw new Error('Error al obtener información IP');
+    }
+    const data = await res.json();
+    setIpInfo(data);
+  } catch (error) {
+    console.error('Error al obtener información IP:', error);
+    setError(error.message || 'No se pudo obtener la información IP');
+  }
+};
+
 // Función para medir el ping
 const measurePing = async () => {
   const attempts = 3; // Número de intentos
@@ -151,31 +171,11 @@ const SpeedTest = () => {
   const [ipInfo, setIpInfo] = useState(null);
   const [error, setError] = useState(null);
   const [latencyWarning, setLatencyWarning] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
-    const fetchIpInfo = async () => {
-      try {
-        const isConnected = await checkInternetConnection();
-        if (!isConnected) {
-          throw new Error('No hay conexión a Internet. No se puede obtener la información IP.');
-        }
-
-        const res = await fetch('https://ipapi.co/json/');
-        if (!res.ok) {
-          throw new Error('Error al obtener información IP');
-        }
-        const data = await res.json();
-        setIpInfo(data);
-      } catch (error) {
-        console.error('Error al obtener información IP:', error);
-        setError(error.message || 'No se pudo obtener la información IP');
-      }
-    };
-
-    fetchIpInfo();
+    fetchIpInfo(setIpInfo, setError);
   }, []);
-
-  const [isTesting, setIsTesting] = useState(false);
 
   const runSpeedTest = async () => {
     if (isTesting) return; // Evita múltiples ejecuciones
