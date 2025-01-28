@@ -4,77 +4,139 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Función para medir el ping
 const measurePing = async () => {
-  const attempts = 3;
-  const results = [];
+  const attempts = 3; // Número de intentos
+  const url = 'https://www.google.com'; // URL a medir
 
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const start = performance.now();
-      await fetch('https://www.google.com', { mode: 'no-cors' });
-      const end = performance.now();
-      results.push(end - start);
-    } catch (error) {
-      console.error('Error al medir el ping:', error);
+  try {
+    let minPing = Infinity;
+
+    // Realiza intentos secuenciales para permitir reuso de conexiones
+    for (let i = 0; i < attempts; i++) {
+      try {
+        // Usa un parámetro único para evitar caché y rastrear la solicitud
+        const uniqueUrl = `${url}?ping=${Date.now()}`;
+        const startTime = performance.now();
+        
+        await fetch(uniqueUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          cache: 'no-store',
+          credentials: 'omit',
+          referrerPolicy: 'no-referrer'
+        });
+        
+        const duration = performance.now() - startTime;
+        
+        // Actualiza el ping mínimo encontrado
+        if (duration < minPing) minPing = duration;
+        
+      } catch (error) {
+        console.error("Error en intento de ping:", error);
+      }
     }
-  }
 
-  if (results.length === 0) {
-    throw new Error('No se pudo medir el ping después de múltiples intentos');
-  }
+    if (minPing === Infinity) {
+      throw new Error("Todos los intentos fallaron");
+    }
 
-  // Calcular la mediana del ping
-  results.sort((a, b) => a - b);
-  const median = results[Math.floor(results.length / 2)];
-  return median;
+    return Math.floor(minPing);
+  } catch (error) {
+    console.error('Error al medir el ping:', error);
+    throw error;
+  }
 };
 
 // Función para medir la velocidad de descarga
 const measureDownloadSpeed = async () => {
+  const fileSize = 5 * 1024 * 1024; // 5MB
+  const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
+
   try {
-    const fileSize = 5 * 1024 * 1024; // 5MB
     const startTime = performance.now();
-    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${fileSize}`);
+
+    // Realizar la solicitud de descarga
+    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${fileSize}`, {
+      signal: controller.signal, // Asignar el AbortController a la solicitud
+    });
+
+    // Verificar si la respuesta es válida
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`Error HTTP! Estado: ${response.status}`);
     }
-    await response.arrayBuffer();
+
+    // Leer el contenido de la respuesta
+    const buffer = await response.arrayBuffer();
+
+    // Validar el tamaño del archivo descargado
+    if (buffer.byteLength !== fileSize) {
+      throw new Error(`Tamaño del archivo incorrecto. Esperado: ${fileSize} bytes, Recibido: ${buffer.byteLength} bytes`);
+    }
+
     const endTime = performance.now();
+
+    // Calcular la velocidad de descarga en Mbps
     const durationInSeconds = (endTime - startTime) / 1000;
-    return (fileSize * 8) / durationInSeconds / 1000000; // Mbps
+    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); // Mbps
+    return Number(speedMbps.toFixed(2)); // Redondear a 2 decimales
   } catch (error) {
     console.error('Error al medir la velocidad de descarga:', error);
-    throw error;
+
+    // Lanzar un error más específico
+    if (error.name === 'AbortError') {
+      throw new Error('La medición de velocidad de descarga fue cancelada.');
+    } else {
+      throw new Error(`Error al medir la velocidad de descarga: ${error.message}`);
+    }
   }
 };
 
 // Función para medir la velocidad de subida
 const measureUploadSpeed = async () => {
-  try {
-    const dataSize = 2 * 1024 * 1024; // 2MB
-    const data = new ArrayBuffer(dataSize);
+  const fileSize = 1 * 1024 * 1024; // 1MB
+  const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
+
+  // TODO: Crear un buffer de datos ficticios para subir
+  const dummyData = new Uint8Array(fileSize).fill(97); // Datos de ejemplo (carácter 'a')
+
+  try{
     const startTime = performance.now();
-    const response = await fetch('https://speed.cloudflare.com/__up', {
+
+    //TODO: Usar el endpoint de subida y metodo POST
+    const response = await fetch('https://httpbin.org/post', {
       method: 'POST',
-      body: data,
+      body: dummyData,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileSize.toString(), // Especificar tamaño
+      },
     });
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`Error HTTP! Estado: ${response.status}`);
     }
+
     const endTime = performance.now();
-    const durationInSeconds = (endTime - startTime) / 1000;
-    return (dataSize * 8) / durationInSeconds / 1000000; // Mbps
-  } catch (error) {
-    console.error('Error al medir la velocidad de subida:', error);
-    throw error;
+    const durationInSeconds = (endTime - startTime) /1000;
+    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); 
+    return Number(speedMbps.toFixed(2));
+  } catch (error){
+    console.error("Error en subida: ", error);
+    throw new Error(`Error de red: ${error.message}`);
   }
 };
 
 const checkInternetConnection = async () => {
+  const timeout = 5000; // 5 segundos
+  const controller = new AbortController();
+  const timeoutID = setTimeout(() => controller.abort(), timeout);
+
   try {
-    await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-store' });
+    await fetch("https://www.google.com", {mode: 'no-cors', cache:'no-store', signal: controller.signal});
+    clearTimeout(timeoutID);
     return true;
   } catch (error) {
-    console.error('Error checking internet connection:', error);
+    console.error("Error checking internet connection: ", error);
     return false;
   }
 };
@@ -113,7 +175,11 @@ const SpeedTest = () => {
     fetchIpInfo();
   }, []);
 
+  const [isTesting, setIsTesting] = useState(false);
+
   const runSpeedTest = async () => {
+    if (isTesting) return; // Evita múltiples ejecuciones
+    setIsTesting(true);
     setIsLoading(true);
     setProgress(0);
     setDownloadSpeed(null);
@@ -154,6 +220,7 @@ const SpeedTest = () => {
       setError(error.message || 'Ocurrió un error durante la prueba. Por favor, inténtelo de nuevo.');
     } finally {
       setIsLoading(false);
+      setIsTesting(false);
     }
   };
 
