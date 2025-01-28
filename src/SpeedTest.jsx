@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // SVG icons
 const UploadIcon = () => (
@@ -18,7 +18,7 @@ const UploadIcon = () => (
     <polyline points="17 8 12 3 7 8"></polyline>
     <line x1="12" y1="3" x2="12" y2="15"></line>
   </svg>
-)
+);
 
 const DownloadIcon = () => (
   <svg
@@ -36,7 +36,7 @@ const DownloadIcon = () => (
     <polyline points="7 10 12 15 17 10"></polyline>
     <line x1="12" y1="15" x2="12" y2="3"></line>
   </svg>
-)
+);
 
 const GaugeIcon = () => (
   <svg
@@ -59,64 +59,66 @@ const GaugeIcon = () => (
     <path d="M20 12a8 8 0 0 0-8-8"></path>
     <path d="M12 12v3.5"></path>
   </svg>
-)
+);
 
 // Función para obtener información IP
 const fetchIpInfo = async (setIpInfo, setError) => {
   try {
     const isConnected = await checkInternetConnection();
     if (!isConnected) {
-      throw new Error('No hay conexión a Internet. No se puede obtener la información IP.');
+      throw new Error(
+        "No hay conexión a Internet. No se puede obtener la información IP."
+      );
     }
 
-    const res = await fetch('https://api.ipquery.io/?format=json');  
+    const res = await fetch("https://api.ipquery.io/?format=json");
     if (!res.ok) {
-      throw new Error('Error al obtener información IP');
+      throw new Error("Error al obtener información IP");
     }
 
     //Pasar la respuesta en JSON
     const data = await res.json();
 
-        // Estructuramos los datos para que sean más fáciles de usar
-        const ipInfo = {
-          ip: data.ip,
-          isp: {
-            asn: data.isp.asn,
-            org: data.isp.org,
-            isp: data.isp.isp,
-          },
-          location: {
-            country: data.location.country,
-            countryCode: data.location.country_code,
-            city: data.location.city,
-            state: data.location.state,
-            zipcode: data.location.zipcode,
-            latitude: data.location.latitude,
-            longitude: data.location.longitude,
-            timezone: data.location.timezone,
-            localtime: data.location.localtime,
-          },
-          risk: {
-            isMobile: data.risk.is_mobile,
-            isVpn: data.risk.is_vpn,
-            isTor: data.risk.is_tor,
-            isProxy: data.risk.is_proxy,
-            isDatacenter: data.risk.is_datacenter,
-            riskScore: data.risk.risk_score,
-          },
-        };
+    // Estructuramos los datos para que sean más fáciles de usar
+    const ipInfo = {
+      ip: data.ip,
+      isp: {
+        asn: data.isp.asn,
+        org: data.isp.org,
+        isp: data.isp.isp,
+      },
+      location: {
+        country: data.location.country,
+        countryCode: data.location.country_code,
+        city: data.location.city,
+        state: data.location.state,
+        zipcode: data.location.zipcode,
+        latitude: data.location.latitude,
+        longitude: data.location.longitude,
+        timezone: data.location.timezone,
+        localtime: data.location.localtime,
+      },
+      risk: {
+        isMobile: data.risk.is_mobile,
+        isVpn: data.risk.is_vpn,
+        isTor: data.risk.is_tor,
+        isProxy: data.risk.is_proxy,
+        isDatacenter: data.risk.is_datacenter,
+        riskScore: data.risk.risk_score,
+      },
+    };
 
     setIpInfo(ipInfo);
   } catch (error) {
-    console.error('Error al obtener información IP:', error);
-    setError(error.message || 'No se pudo obtener la información IP');
+    console.error("Error al obtener información IP:", error);
+    setError(error.message || "No se pudo obtener la información IP");
   }
 };
 
 // Función para medir el ping
 const measurePing = async () => {
   const attempts = 3; // Número de intentos
-  const url = 'https://www.google.com'; // URL a medir
+  const url = "https://www.google.com"; // URL a medir
 
   try {
     let minPing = Infinity;
@@ -127,20 +129,19 @@ const measurePing = async () => {
         // Usa un parámetro único para evitar caché y rastrear la solicitud
         const uniqueUrl = `${url}?ping=${Date.now()}`;
         const startTime = performance.now();
-        
+
         await fetch(uniqueUrl, {
-          method: 'HEAD',
-          mode: 'no-cors',
-          cache: 'no-store',
-          credentials: 'omit',
-          referrerPolicy: 'no-referrer'
+          method: "HEAD",
+          mode: "no-cors",
+          cache: "no-store",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
         });
-        
+
         const duration = performance.now() - startTime;
-        
+
         // Actualiza el ping mínimo encontrado
         if (duration < minPing) minPing = duration;
-        
       } catch (error) {
         console.error("Error en intento de ping:", error);
       }
@@ -152,7 +153,7 @@ const measurePing = async () => {
 
     return Math.floor(minPing);
   } catch (error) {
-    console.error('Error al medir el ping:', error);
+    console.error("Error al medir el ping:", error);
     throw error;
   }
 };
@@ -166,9 +167,12 @@ const measureDownloadSpeed = async () => {
     const startTime = performance.now();
 
     // Realizar la solicitud de descarga
-    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${fileSize}`, {
-      signal: controller.signal, // Asignar el AbortController a la solicitud
-    });
+    const response = await fetch(
+      `https://speed.cloudflare.com/__down?bytes=${fileSize}`,
+      {
+        signal: controller.signal, // Asignar el AbortController a la solicitud
+      }
+    );
 
     // Verificar si la respuesta es válida
     if (!response.ok) {
@@ -180,7 +184,9 @@ const measureDownloadSpeed = async () => {
 
     // Validar el tamaño del archivo descargado
     if (buffer.byteLength !== fileSize) {
-      throw new Error(`Tamaño del archivo incorrecto. Esperado: ${fileSize} bytes, Recibido: ${buffer.byteLength} bytes`);
+      throw new Error(
+        `Tamaño del archivo incorrecto. Esperado: ${fileSize} bytes, Recibido: ${buffer.byteLength} bytes`
+      );
     }
 
     const endTime = performance.now();
@@ -190,13 +196,15 @@ const measureDownloadSpeed = async () => {
     const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); // Mbps
     return Number(speedMbps.toFixed(2)); // Redondear a 2 decimales
   } catch (error) {
-    console.error('Error al medir la velocidad de descarga:', error);
+    console.error("Error al medir la velocidad de descarga:", error);
 
     // Lanzar un error más específico
-    if (error.name === 'AbortError') {
-      throw new Error('La medición de velocidad de descarga fue cancelada.');
+    if (error.name === "AbortError") {
+      throw new Error("La medición de velocidad de descarga fue cancelada.");
     } else {
-      throw new Error(`Error al medir la velocidad de descarga: ${error.message}`);
+      throw new Error(
+        `Error al medir la velocidad de descarga: ${error.message}`
+      );
     }
   }
 };
@@ -209,17 +217,17 @@ const measureUploadSpeed = async () => {
   // TODO: Crear un buffer de datos ficticios para subir
   const dummyData = new Uint8Array(fileSize).fill(97); // Datos de ejemplo (carácter 'a')
 
-  try{
+  try {
     const startTime = performance.now();
 
     //TODO: Usar el endpoint de subida y metodo POST
-    const response = await fetch('https://httpbin.org/post', {
-      method: 'POST',
+    const response = await fetch("https://httpbin.org/post", {
+      method: "POST",
       body: dummyData,
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': fileSize.toString(), // Especificar tamaño
+        "Content-Type": "application/octet-stream",
+        "Content-Length": fileSize.toString(), // Especificar tamaño
       },
     });
 
@@ -228,10 +236,10 @@ const measureUploadSpeed = async () => {
     }
 
     const endTime = performance.now();
-    const durationInSeconds = (endTime - startTime) /1000;
-    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); 
+    const durationInSeconds = (endTime - startTime) / 1000;
+    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000);
     return Number(speedMbps.toFixed(2));
-  } catch (error){
+  } catch (error) {
     console.error("Error en subida: ", error);
     throw new Error(`Error de red: ${error.message}`);
   }
@@ -243,7 +251,11 @@ const checkInternetConnection = async () => {
   const timeoutID = setTimeout(() => controller.abort(), timeout);
 
   try {
-    await fetch("https://www.google.com", {mode: 'no-cors', cache:'no-store', signal: controller.signal});
+    await fetch("https://www.google.com", {
+      mode: "no-cors",
+      cache: "no-store",
+      signal: controller.signal,
+    });
     clearTimeout(timeoutID);
     return true;
   } catch (error) {
@@ -282,14 +294,16 @@ const SpeedTest = () => {
     try {
       const isConnected = await checkInternetConnection();
       if (!isConnected) {
-        throw new Error('No hay conexión a Internet. Por favor, verifique su conexión e intente nuevamente.');
+        throw new Error(
+          "No hay conexión a Internet. Por favor, verifique su conexión e intente nuevamente."
+        );
       }
 
       // Medir ping
       setProgress(10);
       const pingResult = await measurePing();
       setPing(Math.round(pingResult));
-      
+
       // Check pingResult si es mayor o igual a 250 ms
       if (pingResult >= 250) {
         setLatencyWarning(true);
@@ -307,8 +321,11 @@ const SpeedTest = () => {
 
       setProgress(100);
     } catch (error) {
-      console.error('Error durante la prueba de velocidad:', error);
-      setError(error.message || 'Ocurrió un error durante la prueba. Por favor, inténtelo de nuevo.');
+      console.error("Error durante la prueba de velocidad:", error);
+      setError(
+        error.message ||
+          "Ocurrió un error durante la prueba. Por favor, inténtelo de nuevo."
+      );
     } finally {
       setIsLoading(false);
       setIsTesting(false);
@@ -316,133 +333,147 @@ const SpeedTest = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-100 to-purple-100 font-sans">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden"
-      >
-        <div className="p-6 bg-blue-600 text-white">
-          <h3 className="text-3xl font-bold text-center">SpeedCheck</h3>
-          <p className="text-center opacity-80 mt-2">Comprueba tu velocidad de Internet</p>
-        </div>
-        <div className="p-6">
+    <div className="min-h-screen bg-[#1A2333] text-white font-sans">
+      {/* Header */}
+      <header className="p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">SpeedCheck</h1>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          {/* Server Info */}
           {ipInfo && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mb-4 text-gray-700 text-sm overflow-hidden bg-gray-50 p-3 rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center mb-8 text-teal-400"
             >
-              <p>
-                <span className="font-semibold">IP:</span> {ipInfo.ip}
+              <p className="text-lg">{ipInfo.isp.org}</p>
+              <p className="text-lg">
+                {ipInfo.location.city} , {ipInfo.location.country}
               </p>
-              <p>
-                <span className="font-semibold">Ubicación:</span> {ipInfo.location.city}, {ipInfo.location.country}
-              </p>
-              <p>
-                <span className="font-semibold">Proveedor:</span> {ipInfo.isp.org}
-              </p>
+              <p className="text-sm text-gray-400">{ipInfo.ip}</p>
             </motion.div>
           )}
-          <button
-            className={`w-full py-3 px-4 font-bold text-white  bg-blue-600 rounded-full transition duration-200 transform hover:scale-105 ${
-              isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
-            }`}
-            onClick={runSpeedTest}
-            disabled={isLoading}
-          >
-            {isLoading ? "Ejecutando prueba..." : "Iniciar Test de Velocidad"}
-          </button>
-          {isLoading && (
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5 }}
-              className="h-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mt-4"
-            />
-          )}
-          <div className="grid grid-cols-3 gap-6 mt-8">
-            {[
-              { metric: "latencia", icon: <GaugeIcon />, value: ping, unit: "ms", label: "Latencia" },
-              { metric: "download", icon: <DownloadIcon />, value: downloadSpeed, unit: "Mbps", label: "Descarga" },
-              { metric: "upload", icon: <UploadIcon />, value: uploadSpeed, unit: "Mbps", label: "Subida" },
-            ].map(({ metric, icon, value, unit, label }) => (
+
+          {/* Test Button */}
+          <div className="relative flex justify-center items-center mb-12">
+            <motion.button
+              onClick={runSpeedTest}
+              disabled={isLoading}
+              className={`w-48 h-48 rounded-full bg-transparent border-4 ${
+                isLoading ? "border-emerald-500/50" : "border-emerald-500"
+              } flex items-center justify-center text-2xl font-bold transition-all 
+              hover:border-teal-400 hover:text-teal-400 hover:scale-105 focus:outline-none 
+              disabled:opacity-50 disabled:cursor-not-allowed`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isLoading ? "" : "GO"}
+            </motion.button>
+
+            {isLoading && (
               <motion.div
-                key={metric}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.3 }}
+                className="absolute inset-0 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Anillo principal giratorio */}
+                <motion.div
+                  className="absolute w-56 h-56 border-4 border-transparent rounded-full"
+                  style={{
+                    borderTopColor: "#10b981",
+                    borderRightColor: "#10b981",
+                  }}
+                  animate={{
+                    rotate: 360,
+                    scale: [1, 1.1, 1],
+                    borderWidth: ["4px", "8px", "4px"],
+                  }}
+                  transition={{
+                    duration: 1.2,
+                    repeat: Infinity,
+                    ease: "anticipate",
+                  }}
+                />
+
+                {/* Anillo secundario contragiratorio */}
+                <motion.div
+                  className="absolute w-64 h-64 border-4 border-transparent rounded-full"
+                  style={{
+                    borderBottomColor: "#2dd4bf",
+                    borderLeftColor: "#2dd4bf",
+                  }}
+                  animate={{
+                    rotate: -360,
+                    scale: [0.9, 1, 0.9],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{
+                    duration: 1.8,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+
+                {/* Puntos saltarines */}
+                <div className="absolute flex space-x-2">
+                  {[...Array(3)].map((_, i) => (
+                    <motion.span
+                      key={i}
+                      className="w-2 h-2 bg-emerald-400 rounded-full"
+                      animate={{
+                        y: [0, -10, 0],
+                        opacity: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.2,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Results */}
+          <div className="grid grid-cols-3 gap-8 mb-12">
+            {[
+              { label: "PING", value: ping, unit: "ms", icon: <GaugeIcon /> },
+              {
+                label: "DESCARGA",
+                value: downloadSpeed,
+                unit: "Mbps",
+                icon: <DownloadIcon />,
+              },
+              {
+                label: "SUBIDA",
+                value: uploadSpeed,
+                unit: "Mbps",
+                icon: <UploadIcon />,
+              },
+            ].map(({ label, value, unit, icon }) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 className="text-center"
               >
-                <motion.div
-                  className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${
-                    metric === "latencia"
-                      ? "bg-blue-100 text-blue-600"
-                      : metric === "download"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-600"
-                  }`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  {icon}
-                </motion.div>
-                <motion.p
-                  className="text-xl font-bold mt-3"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  {value !== null ? `${value} ${unit}` : "-"}
-                </motion.p>
-                <p className="text-sm text-gray-600 mt-1">{label}</p>
+                <div className="mb-2 text-emerald-500">{icon}</div>
+                <p className="text-3xl font-bold mb-1">{value || "-"}</p>
+                <p className="text-sm text-gray-400">{unit}</p>
+                <p className="text-xs text-gray-500">{label}</p>
               </motion.div>
             ))}
           </div>
-          <AnimatePresence>
-            {error && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.3 }}
-                className="mt-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg"
-                role="alert"
-              >
-                <p className="font-bold">Error</p>
-                {error}
-              </motion.p>
-            )}
-            {latencyWarning && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.3 }}
-                className="mt-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg"
-                role="alert"
-              >
-                <p className="font-bold">Advertencia</p>
-                Su conexión es inestable.
-              </motion.p>
-            )}
-          </AnimatePresence>
         </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="p-4 bg-gray-50 text-center text-sm text-gray-600"
-        >
-          Los resultados son estimaciones y pueden variar. Para obtener una medición más precisa, ejecute varias
-          pruebas.
-        </motion.div>
-      </motion.div>
+      </main>
     </div>
-  )
-}
+  );
+};
 
 export default SpeedTest;
