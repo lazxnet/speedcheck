@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, Download, Gauge } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Función externa para obtener información IP
+// Función para obtener información IP
 const fetchIpInfo = async (setIpInfo, setError) => {
   try {
     const isConnected = await checkInternetConnection();
