@@ -10,12 +10,44 @@ const fetchIpInfo = async (setIpInfo, setError) => {
       throw new Error('No hay conexión a Internet. No se puede obtener la información IP.');
     }
 
-    const res = await fetch('https://ipapi.co/json/');
+    const res = await fetch('https://api.ipquery.io/?format=json');  
     if (!res.ok) {
       throw new Error('Error al obtener información IP');
     }
+
+    //Pasar la respuesta en JSON
     const data = await res.json();
-    setIpInfo(data);
+
+        // Estructuramos los datos para que sean más fáciles de usar
+        const ipInfo = {
+          ip: data.ip,
+          isp: {
+            asn: data.isp.asn,
+            org: data.isp.org,
+            isp: data.isp.isp,
+          },
+          location: {
+            country: data.location.country,
+            countryCode: data.location.country_code,
+            city: data.location.city,
+            state: data.location.state,
+            zipcode: data.location.zipcode,
+            latitude: data.location.latitude,
+            longitude: data.location.longitude,
+            timezone: data.location.timezone,
+            localtime: data.location.localtime,
+          },
+          risk: {
+            isMobile: data.risk.is_mobile,
+            isVpn: data.risk.is_vpn,
+            isTor: data.risk.is_tor,
+            isProxy: data.risk.is_proxy,
+            isDatacenter: data.risk.is_datacenter,
+            riskScore: data.risk.risk_score,
+          },
+        };
+
+    setIpInfo(ipInfo);
   } catch (error) {
     console.error('Error al obtener información IP:', error);
     setError(error.message || 'No se pudo obtener la información IP');
@@ -246,8 +278,8 @@ const SpeedTest = () => {
               className="mb-4 text-gray-800 text-sm overflow-hidden"
             >
               <p>IP: {ipInfo.ip}</p>
-              <p>Ubicación: {ipInfo.city}, {ipInfo.country_name}</p>
-              <p>Proveedor: {ipInfo.org}</p>
+              <p>Ubicación: {ipInfo.location.city}, {ipInfo.location.country}</p>
+              <p>Proveedor: {ipInfo.isp.org}</p>
             </motion.div>
           )}
           <button
