@@ -335,7 +335,9 @@ const SpeedTest = () => {
   return (
     <div className="min-h-screen bg-[#1A2333] text-white font-sans">
       {/* Header */}
-      <header className="p-4 flex justify-between items-center">
+      <header className="p-4 flex justify-center items-center">
+        {" "}
+        {/* Updated Header */}
         <h1 className="text-2xl font-bold">SpeedCheck</h1>
       </header>
 
