@@ -1,6 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Download, Gauge } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// SVG icons
+const UploadIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="17 8 12 3 7 8"></polyline>
+    <line x1="12" y1="3" x2="12" y2="15"></line>
+  </svg>
+)
+
+const DownloadIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <line x1="12" y1="15" x2="12" y2="3"></line>
+  </svg>
+)
+
+const GaugeIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M16.2 7.8l-2.8 2.8"></path>
+    <path d="M2 12h2"></path>
+    <path d="M12 2v2"></path>
+    <path d="M22 12h-2"></path>
+    <path d="M12 22v-2"></path>
+    <path d="M20 12a8 8 0 0 0-8-8"></path>
+    <path d="M12 12v3.5"></path>
+  </svg>
+)
 
 // Función para obtener información IP
 const fetchIpInfo = async (setIpInfo, setError) => {
@@ -257,16 +316,16 @@ const SpeedTest = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100 font-sans">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-100 to-purple-100 font-sans">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden"
+        className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden"
       >
         <div className="p-6 bg-blue-600 text-white">
-          <h3 className="text-2xl font-semibold text-center">SpeedCheck</h3>
-          <p className="text-center opacity-80">Comprueba tu velocidad de Internet</p>
+          <h3 className="text-3xl font-bold text-center">SpeedCheck</h3>
+          <p className="text-center opacity-80 mt-2">Comprueba tu velocidad de Internet</p>
         </div>
         <div className="p-6">
           {ipInfo && (
@@ -275,32 +334,42 @@ const SpeedTest = () => {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="mb-4 text-gray-800 text-sm overflow-hidden"
+              className="mb-4 text-gray-700 text-sm overflow-hidden bg-gray-50 p-3 rounded-lg"
             >
-              <p>IP: {ipInfo.ip}</p>
-              <p>Ubicación: {ipInfo.location.city}, {ipInfo.location.country}</p>
-              <p>Proveedor: {ipInfo.isp.org}</p>
+              <p>
+                <span className="font-semibold">IP:</span> {ipInfo.ip}
+              </p>
+              <p>
+                <span className="font-semibold">Ubicación:</span> {ipInfo.location.city}, {ipInfo.location.country}
+              </p>
+              <p>
+                <span className="font-semibold">Proveedor:</span> {ipInfo.isp.org}
+              </p>
             </motion.div>
           )}
           <button
-            className={`w-full py-3 px-4 font-medium text-white bg-blue-600 rounded-full transition duration-200 ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+            className={`w-full py-3 px-4 font-bold text-white  bg-blue-600 rounded-full transition duration-200 transform hover:scale-105 ${
+              isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
             }`}
             onClick={runSpeedTest}
             disabled={isLoading}
           >
-            {isLoading ? 'Ejecutando prueba...' : 'Iniciar Test de Velocidad'}
+            {isLoading ? "Ejecutando prueba..." : "Iniciar Test de Velocidad"}
           </button>
           {isLoading && (
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5 }}
-              className="h-2 bg-blue-600 rounded-full mt-4"
+              className="h-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mt-4"
             />
           )}
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            {['latencia', 'download', 'upload'].map((metric) => (
+          <div className="grid grid-cols-3 gap-6 mt-8">
+            {[
+              { metric: "latencia", icon: <GaugeIcon />, value: ping, unit: "ms", label: "Latencia" },
+              { metric: "download", icon: <DownloadIcon />, value: downloadSpeed, unit: "Mbps", label: "Descarga" },
+              { metric: "upload", icon: <UploadIcon />, value: uploadSpeed, unit: "Mbps", label: "Subida" },
+            ].map(({ metric, icon, value, unit, label }) => (
               <motion.div
                 key={metric}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -308,30 +377,28 @@ const SpeedTest = () => {
                 transition={{ delay: 0.5, duration: 0.3 }}
                 className="text-center"
               >
-                <motion.div 
-                  className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
-                    metric === 'latencia' ? 'bg-blue-100 text-blue-600' :
-                    metric === 'download' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                <motion.div
+                  className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${
+                    metric === "latencia"
+                      ? "bg-blue-100 text-blue-600"
+                      : metric === "download"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
                   }`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  {metric === 'latencia' ? <Gauge size={24} /> :
-                   metric === 'download' ? <Download size={24} /> : <Upload size={24} />}
+                  {icon}
                 </motion.div>
-                <motion.p 
-                  className="text-lg font-semibold mt-2"
+                <motion.p
+                  className="text-xl font-bold mt-3"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.7 }}
                 >
-                  {metric === 'latencia' ? (ping !== null ? `${ping} ms` : '-') :
-                   metric === 'download' ? (downloadSpeed !== null ? `${downloadSpeed} Mbps` : '-') :
-                   (uploadSpeed !== null ? `${uploadSpeed} Mbps` : '-')}
+                  {value !== null ? `${value} ${unit}` : "-"}
                 </motion.p>
-                <p className="text-sm text-gray-600">
-                  {metric === 'latencia' ? 'Latencia' : metric === 'download' ? 'Descarga' : 'Subida'}
-                </p>
+                <p className="text-sm text-gray-600 mt-1">{label}</p>
               </motion.div>
             ))}
           </div>
@@ -342,7 +409,7 @@ const SpeedTest = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.3 }}
-                className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded"
+                className="mt-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg"
                 role="alert"
               >
                 <p className="font-bold">Error</p>
@@ -355,7 +422,7 @@ const SpeedTest = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.3 }}
-                className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded"
+                className="mt-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg"
                 role="alert"
               >
                 <p className="font-bold">Advertencia</p>
@@ -368,13 +435,14 @@ const SpeedTest = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="p-4 bg-gray-100 text-center text-sm text-gray-600"
+          className="p-4 bg-gray-50 text-center text-sm text-gray-600"
         >
-          Los resultados son estimaciones y pueden variar. Para obtener una medición más precisa, ejecute varias pruebas.
+          Los resultados son estimaciones y pueden variar. Para obtener una medición más precisa, ejecute varias
+          pruebas.
         </motion.div>
       </motion.div>
     </div>
-  );
-};
+  )
+}
 
 export default SpeedTest;
