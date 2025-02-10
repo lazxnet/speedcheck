@@ -65,15 +65,11 @@ const fetchIpInfo = async (setIpInfo, setError) => {
   try {
     const isConnected = await checkInternetConnection();
     if (!isConnected) {
-      throw new Error(
-        "No hay conexión a Internet. No se puede obtener la información IP."
-      );
+      throw new Error("No hay conexión a Internet. No se puede obtener la información IP.");
     }
 
     const res = await fetch("https://api.ipquery.io/?format=json");
-    if (!res.ok) {
-      throw new Error("Error al obtener información IP");
-    }
+    if (!res.ok) throw new Error("Error al obtener información IP");
 
     const data = await res.json();
 
@@ -107,7 +103,6 @@ const fetchIpInfo = async (setIpInfo, setError) => {
 
     setIpInfo(ipInfo);
   } catch (error) {
-    console.error("Error al obtener información IP:", error);
     setError(error.message || "No se pudo obtener la información IP");
   }
 };
@@ -118,12 +113,10 @@ const measurePing = async () => {
 
   try {
     let minPing = Infinity;
-
     for (let i = 0; i < attempts; i++) {
       try {
         const uniqueUrl = `${url}?ping=${Date.now()}`;
         const startTime = performance.now();
-
         await fetch(uniqueUrl, {
           method: "HEAD",
           mode: "no-cors",
@@ -131,122 +124,69 @@ const measurePing = async () => {
           credentials: "omit",
           referrerPolicy: "no-referrer",
         });
-
         const duration = performance.now() - startTime;
         if (duration < minPing) minPing = duration;
       } catch (error) {
         console.error("Error en intento de ping:", error);
       }
     }
-
-    if (minPing === Infinity) {
-      throw new Error("Todos los intentos fallaron");
-    }
-
     return Math.floor(minPing);
   } catch (error) {
-    console.error("Error al medir el ping:", error);
-    throw error;
+    throw new Error("Error al medir el ping");
   }
 };
 
 const measureDownloadSpeed = async () => {
   const fileSize = 5 * 1024 * 1024;
-  const controller = new AbortController();
-
   try {
     const startTime = performance.now();
-
-    const response = await fetch(
-      `https://speed.cloudflare.com/__down?bytes=${fileSize}`,
-      {
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Error HTTP! Estado: ${response.status}`);
-    }
-
+    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${fileSize}`);
+    if (!response.ok) throw new Error(`Error HTTP! Estado: ${response.status}`);
+    
     const buffer = await response.arrayBuffer();
-
-    if (buffer.byteLength !== fileSize) {
-      throw new Error(
-        `Tamaño del archivo incorrecto. Esperado: ${fileSize} bytes, Recibido: ${buffer.byteLength} bytes`
-      );
-    }
-
-    const endTime = performance.now();
-    const durationInSeconds = (endTime - startTime) / 1000;
-    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000);
-    return Number(speedMbps.toFixed(2));
+    if (buffer.byteLength !== fileSize) throw new Error("Tamaño del archivo incorrecto");
+    
+    const duration = (performance.now() - startTime) / 1000;
+    return Number(((fileSize * 8) / (duration * 1000000)).toFixed(2));
   } catch (error) {
-    console.error("Error al medir la velocidad de descarga:", error);
-
-    if (error.name === "AbortError") {
-      throw new Error("La medición de velocidad de descarga fue cancelada.");
-    } else {
-      throw new Error(
-        `Error al medir la velocidad de descarga: ${error.message}`
-      );
-    }
+    throw new Error("Error al medir la velocidad de descarga");
   }
 };
 
 const measureUploadSpeed = async () => {
   const fileSize = 1 * 1024 * 1024;
-  const controller = new AbortController();
   const dummyData = new Uint8Array(fileSize).fill(97);
 
   try {
     const startTime = performance.now();
-
     const response = await fetch("https://httpbin.org/post", {
       method: "POST",
       body: dummyData,
-      signal: controller.signal,
       headers: {
         "Content-Type": "application/octet-stream",
         "Content-Length": fileSize.toString(),
       },
     });
-
-    if (!response.ok) {
-      throw new Error(`Error HTTP! Estado: ${response.status}`);
-    }
-
-    const endTime = performance.now();
-    const durationInSeconds = (endTime - startTime) / 1000;
-    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000);
-    return Number(speedMbps.toFixed(2));
+    if (!response.ok) throw new Error(`Error HTTP! Estado: ${response.status}`);
+    
+    const duration = (performance.now() - startTime) / 1000;
+    return Number(((fileSize * 8) / (duration * 1000000)).toFixed(2));
   } catch (error) {
-    console.error("Error en subida: ", error);
-    throw new Error(`Error de red: ${error.message}`);
+    throw new Error("Error al medir la velocidad de subida");
   }
 };
 
 const checkInternetConnection = async () => {
-  const timeout = 5000;
-  const controller = new AbortController();
-  const timeoutID = setTimeout(() => controller.abort(), timeout);
-
   try {
-    await fetch("https://www.google.com", {
-      mode: "no-cors",
-      cache: "no-store",
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutID);
+    await fetch("https://www.google.com", { mode: "no-cors", cache: "no-store" });
     return true;
   } catch (error) {
-    console.error("Error checking internet connection: ", error);
     return false;
   }
 };
 
 const SpeedTest = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [downloadSpeed, setDownloadSpeed] = useState(null);
   const [uploadSpeed, setUploadSpeed] = useState(null);
   const [ping, setPing] = useState(null);
@@ -263,7 +203,6 @@ const SpeedTest = () => {
     if (isTesting) return;
     setIsTesting(true);
     setIsLoading(true);
-    setProgress(0);
     setDownloadSpeed(null);
     setUploadSpeed(null);
     setPing(null);
@@ -271,36 +210,18 @@ const SpeedTest = () => {
     setLatencyWarning(false);
 
     try {
-      const isConnected = await checkInternetConnection();
-      if (!isConnected) {
-        throw new Error(
-          "No hay conexión a Internet. Por favor, verifique su conexión e intente nuevamente."
-        );
+      if (!(await checkInternetConnection())) {
+        throw new Error("No hay conexión a Internet. Verifique su conexión.");
       }
 
-      setProgress(10);
       const pingResult = await measurePing();
-      setPing(Math.round(pingResult));
+      setPing(pingResult);
+      if (pingResult >= 250) setLatencyWarning(true);
 
-      if (pingResult >= 250) {
-        setLatencyWarning(true);
-      }
-
-      setProgress(40);
-      const downloadResult = await measureDownloadSpeed();
-      setDownloadSpeed(Number(downloadResult.toFixed(2)));
-
-      setProgress(70);
-      const uploadResult = await measureUploadSpeed();
-      setUploadSpeed(Number(uploadResult.toFixed(2)));
-
-      setProgress(100);
+      setDownloadSpeed(await measureDownloadSpeed());
+      setUploadSpeed(await measureUploadSpeed());
     } catch (error) {
-      console.error("Error durante la prueba de velocidad:", error);
-      setError(
-        error.message ||
-          "Ocurrió un error durante la prueba. Por favor, inténtelo de nuevo."
-      );
+      setError(error.message);
     } finally {
       setIsLoading(false);
       setIsTesting(false);
@@ -335,15 +256,6 @@ const SpeedTest = () => {
             </motion.div>
           )}
 
-          <div className="h-2 bg-gray-800 rounded-full mb-8">
-            <motion.div
-              className="h-full bg-emerald-500 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-
           {ipInfo && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -352,7 +264,7 @@ const SpeedTest = () => {
             >
               <p className="text-lg">{ipInfo.isp.org}</p>
               <p className="text-lg">
-                {ipInfo.location.city} , {ipInfo.location.country}
+                {ipInfo.location.city}, {ipInfo.location.country}
               </p>
               <p className="text-sm text-gray-400">{ipInfo.ip}</p>
             </motion.div>
@@ -378,58 +290,24 @@ const SpeedTest = () => {
                 className="absolute inset-0 flex items-center justify-center"
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
               >
                 <motion.div
                   className="absolute w-56 h-56 border-4 border-transparent rounded-full"
-                  style={{
-                    borderTopColor: "#10b981",
-                    borderRightColor: "#10b981",
-                  }}
+                  style={{ borderTopColor: "#10b981", borderRightColor: "#10b981" }}
                   animate={{
                     rotate: 360,
                     scale: [1, 1.1, 1],
                     borderWidth: ["4px", "8px", "4px"],
                   }}
-                  transition={{
-                    duration: 1.2,
-                    repeat: Infinity,
-                    ease: "anticipate",
-                  }}
+                  transition={{ duration: 1.2, repeat: Infinity }}
                 />
-
-                <motion.div
-                  className="absolute w-64 h-64 border-4 border-transparent rounded-full"
-                  style={{
-                    borderBottomColor: "#2dd4bf",
-                    borderLeftColor: "#2dd4bf",
-                  }}
-                  animate={{
-                    rotate: -360,
-                    scale: [0.9, 1, 0.9],
-                    opacity: [0.8, 1, 0.8],
-                  }}
-                  transition={{
-                    duration: 1.8,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                />
-
                 <div className="absolute flex space-x-2">
                   {[...Array(3)].map((_, i) => (
                     <motion.span
                       key={i}
                       className="w-2 h-2 bg-emerald-400 rounded-full"
-                      animate={{
-                        y: [0, -10, 0],
-                        opacity: [0.5, 1, 0.5],
-                      }}
-                      transition={{
-                        duration: 1.2,
-                        repeat: Infinity,
-                        delay: i * 0.2,
-                      }}
+                      animate={{ y: [0, -10, 0], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
                     />
                   ))}
                 </div>
@@ -440,18 +318,8 @@ const SpeedTest = () => {
           <div className="grid grid-cols-3 gap-8 mb-12">
             {[
               { label: "PING", value: ping, unit: "ms", icon: <GaugeIcon /> },
-              {
-                label: "DESCARGA",
-                value: downloadSpeed,
-                unit: "Mbps",
-                icon: <DownloadIcon />,
-              },
-              {
-                label: "SUBIDA",
-                value: uploadSpeed,
-                unit: "Mbps",
-                icon: <UploadIcon />,
-              },
+              { label: "DESCARGA", value: downloadSpeed, unit: "Mbps", icon: <DownloadIcon /> },
+              { label: "SUBIDA", value: uploadSpeed, unit: "Mbps", icon: <UploadIcon /> },
             ].map(({ label, value, unit, icon }) => (
               <motion.div
                 key={label}
