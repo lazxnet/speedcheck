@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion} from "framer-motion";
+import { motion } from "framer-motion";
 
 // SVG icons
 const UploadIcon = () => (
@@ -61,7 +61,6 @@ const GaugeIcon = () => (
   </svg>
 );
 
-// Función para obtener información IP
 const fetchIpInfo = async (setIpInfo, setError) => {
   try {
     const isConnected = await checkInternetConnection();
@@ -76,10 +75,8 @@ const fetchIpInfo = async (setIpInfo, setError) => {
       throw new Error("Error al obtener información IP");
     }
 
-    //Pasar la respuesta en JSON
     const data = await res.json();
 
-    // Estructuramos los datos para que sean más fáciles de usar
     const ipInfo = {
       ip: data.ip,
       isp: {
@@ -115,18 +112,15 @@ const fetchIpInfo = async (setIpInfo, setError) => {
   }
 };
 
-// Función para medir el ping
 const measurePing = async () => {
-  const attempts = 3; // Número de intentos
-  const url = "https://www.google.com"; // URL a medir
+  const attempts = 3;
+  const url = "https://www.google.com";
 
   try {
     let minPing = Infinity;
 
-    // Realiza intentos secuenciales para permitir reuso de conexiones
     for (let i = 0; i < attempts; i++) {
       try {
-        // Usa un parámetro único para evitar caché y rastrear la solicitud
         const uniqueUrl = `${url}?ping=${Date.now()}`;
         const startTime = performance.now();
 
@@ -139,8 +133,6 @@ const measurePing = async () => {
         });
 
         const duration = performance.now() - startTime;
-
-        // Actualiza el ping mínimo encontrado
         if (duration < minPing) minPing = duration;
       } catch (error) {
         console.error("Error en intento de ping:", error);
@@ -158,31 +150,26 @@ const measurePing = async () => {
   }
 };
 
-// Función para medir la velocidad de descarga
 const measureDownloadSpeed = async () => {
-  const fileSize = 5 * 1024 * 1024; // 5MB
-  const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
+  const fileSize = 5 * 1024 * 1024;
+  const controller = new AbortController();
 
   try {
     const startTime = performance.now();
 
-    // Realizar la solicitud de descarga
     const response = await fetch(
       `https://speed.cloudflare.com/__down?bytes=${fileSize}`,
       {
-        signal: controller.signal, // Asignar el AbortController a la solicitud
+        signal: controller.signal,
       }
     );
 
-    // Verificar si la respuesta es válida
     if (!response.ok) {
       throw new Error(`Error HTTP! Estado: ${response.status}`);
     }
 
-    // Leer el contenido de la respuesta
     const buffer = await response.arrayBuffer();
 
-    // Validar el tamaño del archivo descargado
     if (buffer.byteLength !== fileSize) {
       throw new Error(
         `Tamaño del archivo incorrecto. Esperado: ${fileSize} bytes, Recibido: ${buffer.byteLength} bytes`
@@ -190,15 +177,12 @@ const measureDownloadSpeed = async () => {
     }
 
     const endTime = performance.now();
-
-    // Calcular la velocidad de descarga en Mbps
     const durationInSeconds = (endTime - startTime) / 1000;
-    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000); // Mbps
-    return Number(speedMbps.toFixed(2)); // Redondear a 2 decimales
+    const speedMbps = (fileSize * 8) / (durationInSeconds * 1000000);
+    return Number(speedMbps.toFixed(2));
   } catch (error) {
     console.error("Error al medir la velocidad de descarga:", error);
 
-    // Lanzar un error más específico
     if (error.name === "AbortError") {
       throw new Error("La medición de velocidad de descarga fue cancelada.");
     } else {
@@ -209,25 +193,21 @@ const measureDownloadSpeed = async () => {
   }
 };
 
-// Función para medir la velocidad de subida
 const measureUploadSpeed = async () => {
-  const fileSize = 1 * 1024 * 1024; // 1MB
-  const controller = new AbortController(); // AbortController para cancelar la solicitud si es necesario
-
-  // TODO: Crear un buffer de datos ficticios para subir
-  const dummyData = new Uint8Array(fileSize).fill(97); // Datos de ejemplo (carácter 'a')
+  const fileSize = 1 * 1024 * 1024;
+  const controller = new AbortController();
+  const dummyData = new Uint8Array(fileSize).fill(97);
 
   try {
     const startTime = performance.now();
 
-    //TODO: Usar el endpoint de subida y metodo POST
     const response = await fetch("https://httpbin.org/post", {
       method: "POST",
       body: dummyData,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/octet-stream",
-        "Content-Length": fileSize.toString(), // Especificar tamaño
+        "Content-Length": fileSize.toString(),
       },
     });
 
@@ -246,7 +226,7 @@ const measureUploadSpeed = async () => {
 };
 
 const checkInternetConnection = async () => {
-  const timeout = 5000; // 5 segundos
+  const timeout = 5000;
   const controller = new AbortController();
   const timeoutID = setTimeout(() => controller.abort(), timeout);
 
@@ -264,7 +244,6 @@ const checkInternetConnection = async () => {
   }
 };
 
-// Componente SpeedTest
 const SpeedTest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -281,7 +260,7 @@ const SpeedTest = () => {
   }, []);
 
   const runSpeedTest = async () => {
-    if (isTesting) return; // Evita múltiples ejecuciones
+    if (isTesting) return;
     setIsTesting(true);
     setIsLoading(true);
     setProgress(0);
@@ -299,22 +278,18 @@ const SpeedTest = () => {
         );
       }
 
-      // Medir ping
       setProgress(10);
       const pingResult = await measurePing();
       setPing(Math.round(pingResult));
 
-      // Check pingResult si es mayor o igual a 250 ms
       if (pingResult >= 250) {
         setLatencyWarning(true);
       }
 
-      // Medir velocidad de descarga
       setProgress(40);
       const downloadResult = await measureDownloadSpeed();
       setDownloadSpeed(Number(downloadResult.toFixed(2)));
 
-      // Medir velocidad de subida
       setProgress(70);
       const uploadResult = await measureUploadSpeed();
       setUploadSpeed(Number(uploadResult.toFixed(2)));
@@ -334,17 +309,41 @@ const SpeedTest = () => {
 
   return (
     <div className="min-h-screen bg-[#1A2333] text-white font-sans">
-      {/* Header */}
       <header className="p-4 flex justify-center items-center">
-        {" "}
-        {/* Updated Header */}
         <h1 className="text-2xl font-bold">SpeedCheck</h1>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          {/* Server Info */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mb-4 p-4 bg-red-900/50 text-red-300 rounded-lg"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          {latencyWarning && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mb-4 p-4 bg-yellow-900/50 text-yellow-300 rounded-lg"
+            >
+              ¡Alta latencia detectada! (Ping ≥250ms)
+            </motion.div>
+          )}
+
+          <div className="h-2 bg-gray-800 rounded-full mb-8">
+            <motion.div
+              className="h-full bg-emerald-500 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+
           {ipInfo && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -359,7 +358,6 @@ const SpeedTest = () => {
             </motion.div>
           )}
 
-          {/* Test Button */}
           <div className="relative flex justify-center items-center mb-12">
             <motion.button
               onClick={runSpeedTest}
@@ -382,7 +380,6 @@ const SpeedTest = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* Anillo principal giratorio */}
                 <motion.div
                   className="absolute w-56 h-56 border-4 border-transparent rounded-full"
                   style={{
@@ -401,7 +398,6 @@ const SpeedTest = () => {
                   }}
                 />
 
-                {/* Anillo secundario contragiratorio */}
                 <motion.div
                   className="absolute w-64 h-64 border-4 border-transparent rounded-full"
                   style={{
@@ -420,7 +416,6 @@ const SpeedTest = () => {
                   }}
                 />
 
-                {/* Puntos saltarines */}
                 <div className="absolute flex space-x-2">
                   {[...Array(3)].map((_, i) => (
                     <motion.span
@@ -442,7 +437,6 @@ const SpeedTest = () => {
             )}
           </div>
 
-          {/* Results */}
           <div className="grid grid-cols-3 gap-8 mb-12">
             {[
               { label: "PING", value: ping, unit: "ms", icon: <GaugeIcon /> },
